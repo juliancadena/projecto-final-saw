@@ -102,6 +102,13 @@ app.get('/search', (req, res) => {
   return res.json({ results, query });
 });
 
+// ── GET /api/users — VULNERABLE: sin autenticación, expone hashes ──
+app.get('/api/users', (req, res) => {
+  // VULNERABLE: no requiere sesión, retorna campos sensibles incluyendo password hash
+  const users = db.prepare('SELECT id, username, email, rol, password FROM usuarios').all();
+  return res.json({ users, flag: FLAGS.sensitive });
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente

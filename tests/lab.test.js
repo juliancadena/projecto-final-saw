@@ -80,3 +80,18 @@ describe('VULN 1b — SQL Injection en /search (UNION SELECT)', () => {
     assert.equal(res.status, 401);
   });
 });
+
+describe('VULN 6 — Exposición de datos sensibles', () => {
+  test('/api/users retorna usuarios con hashes sin requerir autenticación', async () => {
+    const res = await request(app).get('/api/users');
+    assert.equal(res.status, 200);
+    assert.ok(Array.isArray(res.body.users));
+    assert.ok(res.body.users.every(u => u.password), 'Los hashes deben estar expuestos');
+    assert.equal(res.body.flag, 'FLAG{s3ns1t1v3_d4t4}');
+  });
+
+  test('/db.sqlite es descargable sin autenticación', async () => {
+    const res = await request(app).get('/db.sqlite');
+    assert.ok(res.status === 200 || res.status === 304);
+  });
+});
