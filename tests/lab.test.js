@@ -161,3 +161,25 @@ describe('VULN 7 — Escalación de privilegios vertical', () => {
     assert.equal(res.body.flag, 'FLAG{pr1v_3sc4l4t10n}');
   });
 });
+
+describe('VULN 5 — File Inclusion / Path Traversal', () => {
+  let cookie;
+  before(async () => {
+    const res = await request(app).post('/login').send({ username: 'alumno_lopez', password: 'alumno123' });
+    cookie = res.headers['set-cookie'];
+  });
+
+  test('Descarga normal de material funciona', async () => {
+    const res = await request(app).get('/download?file=temario_u1.txt').set('Cookie', cookie);
+    assert.equal(res.status, 200);
+    assert.ok(res.body.content.includes('TEMARIO'));
+  });
+
+  test('Path traversal ../../secret_lfi.txt revela FLAG{f1l3_1nclus10n}', async () => {
+    const payload = encodeURIComponent('../../secret_lfi.txt');
+    const res = await request(app).get(`/download?file=${payload}`).set('Cookie', cookie);
+    assert.equal(res.status, 200);
+    assert.equal(res.body.flag, 'FLAG{f1l3_1nclus10n}');
+    assert.ok(res.body.content.includes('FLAG{f1l3_1nclus10n}'));
+  });
+});

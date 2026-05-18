@@ -196,6 +196,24 @@ app.post('/profile/update', (req, res) => {
   return res.json(response);
 });
 
+// ── GET /download — VULNERABLE: Path Traversal ───────────────
+app.get('/download', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+
+  const file = req.query.file || '';
+  // VULNERABLE: path.join sin validar que el resultado esté dentro de materiales/
+  const filePath = path.join(__dirname, 'public', 'materiales', file);
+
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const response = { file, filePath, content };
+    if (file.includes('..')) response.flag = FLAGS.lfi;
+    return res.json(response);
+  } catch (e) {
+    return res.status(404).json({ error: 'Archivo no encontrado', filePath, message: e.message });
+  }
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente
