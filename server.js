@@ -84,6 +84,24 @@ app.get('/logout', (req, res) => {
   res.redirect('/');
 });
 
+// ── GET /search — VULNERABLE: SQL Injection (UNION) ──────────
+app.get('/search', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+
+  const q = req.query.q || '';
+  // VULNERABLE: concatenación directa
+  const query = `SELECT id, username, nombre, email, rol FROM usuarios WHERE nombre LIKE '%${q}%' OR username LIKE '%${q}%'`;
+
+  let results;
+  try {
+    results = db.prepare(query).all();
+  } catch (e) {
+    return res.status(400).json({ error: e.message, query });
+  }
+
+  return res.json({ results, query });
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente
