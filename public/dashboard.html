@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard — Portal Universitario</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav>
+    <span>🏛️ Universidad Autónoma — <span id="userName"></span></span>
+    <div>
+      <a href="/messages">Mensajes</a>
+      <a href="/logout">Cerrar sesión</a>
+    </div>
+  </nav>
+  <div class="container">
+    <h1>Panel del alumno</h1>
+
+    <!-- Búsqueda de alumnos (SQLi) -->
+    <div class="card">
+      <h2>🔍 Búsqueda de alumnos</h2>
+      <input type="text" id="searchInput" placeholder="Buscar por nombre o usuario...">
+      <button onclick="buscar()">Buscar</button>
+      <div id="searchResults"></div>
+    </div>
+
+    <!-- Descarga de material (LFI) -->
+    <div class="card">
+      <h2>📁 Material de clase</h2>
+      <input type="text" id="fileInput" placeholder="Nombre del archivo (ej: temario_u1.txt)">
+      <button onclick="descargar()">Descargar</button>
+      <pre id="fileContent" style="margin-top:10px;background:#f5f5f5;padding:10px;border-radius:4px;overflow:auto;"></pre>
+      <div id="flagLfi"></div>
+    </div>
+
+    <!-- Actualizar perfil (CSRF + privesc) -->
+    <div class="card">
+      <h2>👤 Mi perfil</h2>
+      <input type="password" id="newPass" placeholder="Nueva contraseña">
+      <button onclick="actualizarPerfil()">Cambiar contraseña</button>
+      <div id="profileMsg"></div>
+    </div>
+  </div>
+  <script src="/js/app.js"></script>
+  <script>
+    getSession().then(u => { if (u) document.getElementById('userName').textContent = u.nombre; });
+
+    async function buscar() {
+      const q = document.getElementById('searchInput').value;
+      const res = await fetch('/search?q=' + encodeURIComponent(q));
+      const data = await res.json();
+      if (!res.ok) { document.getElementById('searchResults').innerHTML = `<p class="error">${data.error}<br><code>${data.query || ''}</code></p>`; return; }
+      document.getElementById('searchResults').innerHTML = `
+        <p style="font-size:12px;color:#888;margin:8px 0">Query: <code>${data.query}</code></p>
+        <table><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th></tr>
+        ${data.results.map(u => `<tr><td>${u.username}</td><td>${u.nombre}</td><td>${u.email}</td><td>${u.rol}</td></tr>`).join('')}
+        </table>`;
+    }
+
+    async function descargar() {
+      const file = document.getElementById('fileInput').value;
+      const res  = await fetch('/download?file=' + encodeURIComponent(file));
+      const data = await res.json();
+      document.getElementById('fileContent').textContent = data.content || data.error || '';
+      showFlag(data.flag, 'flagLfi');
+    }
+
+    async function actualizarPerfil() {
+      const password = document.getElementById('newPass').value;
+      const res  = await fetch('/profile/update', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ password }) });
+      const data = await res.json();
+      const msg  = document.getElementById('profileMsg');
+      if (data.csrf_flag) msg.innerHTML = `<div class="flag-box">🚩 CSRF Flag: ${data.csrf_flag}</div>`;
+      else msg.innerHTML = `<p class="success">${data.message || 'Actualizado'}</p>`;
+    }
+  </script>
+</body>
+</html>

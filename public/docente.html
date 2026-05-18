@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Docente — Portal Universitario</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav>
+    <span>🏛️ Universidad Autónoma — Panel Docente</span>
+    <div><a href="/messages">Mensajes</a> <a href="/logout">Cerrar sesión</a></div>
+  </nav>
+  <div class="container">
+    <h1>Bienvenido, <span id="docenteName"></span></h1>
+    <div class="card">
+      <h2>📋 Lista de alumnos</h2>
+      <button onclick="cargarAlumnos()">Cargar alumnos</button>
+      <div id="alumnosList" style="margin-top:15px;"></div>
+    </div>
+    <div class="card">
+      <h2>📨 Mensajes recientes</h2>
+      <a href="/messages">Ver tablero completo →</a>
+    </div>
+  </div>
+  <script src="/js/app.js"></script>
+  <script>
+    getSession().then(u => { if (u) document.getElementById('docenteName').textContent = u.nombre; });
+
+    async function cargarAlumnos() {
+      const res  = await fetch('/search?q=');
+      const data = await res.json();
+      document.getElementById('alumnosList').innerHTML = `
+        <table><tr><th>Usuario</th><th>Nombre</th><th>Email</th><th>Rol</th></tr>
+        ${data.results.map(u=>`<tr><td>${u.username}</td><td>${u.nombre}</td><td>${u.email}</td><td><span class="badge badge-${u.rol}">${u.rol}</span></td></tr>`).join('')}
+        </table>`;
+    }
+  </script>
+</body>
+</html>

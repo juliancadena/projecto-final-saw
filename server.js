@@ -238,7 +238,11 @@ app.get('/admin/panel', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-// ── Rutas (se añaden en tareas posteriores) ───────────────────
+// ── GET /api/session — info del usuario actual ────────────────
+app.get('/api/session', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+  return res.json(req.session.user);
+});
 
 // Iniciar servidor solo cuando se ejecuta directamente
 if (require.main === module) {

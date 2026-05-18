@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal Universitario — Inicio de sesión</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav>
+    <span>🏛️ Universidad Autónoma</span>
+  </nav>
+  <div class="container">
+    <div class="card" style="max-width:400px;margin:60px auto;">
+      <h1>Iniciar sesión</h1>
+      <form id="loginForm">
+        <input type="text"     name="username" placeholder="Usuario"     required>
+        <input type="password" name="password" placeholder="Contraseña" required>
+        <button type="submit">Entrar</button>
+        <p id="msg" class="error"></p>
+      </form>
+    </div>
+  </div>
+  <script>
+    // Verificar si ya hay sesión activa
+    fetch('/api/session').then(r => { if (r.ok) r.json().then(u => { window.location = '/dashboard.html'; }); });
+
+    document.getElementById('loginForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const body = new URLSearchParams(new FormData(e.target));
+      const res  = await fetch('/login', { method: 'POST', body });
+      const data = await res.json();
+      if (!res.ok) {
+        document.getElementById('msg').textContent = data.error || 'Error al iniciar sesión';
+        return;
+      }
+      if (data.flag) {
+        alert('🚩 FLAG encontrada: ' + data.flag + '\n\nQuery: ' + (data.debug || ''));
+      }
+      if (data.rol === 'admin')   window.location = '/admin.html';
+      else if (data.rol === 'docente') window.location = '/docente.html';
+      else window.location = '/dashboard.html';
+    });
+  </script>
+</body>
+</html>

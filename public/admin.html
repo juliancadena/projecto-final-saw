@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Panel Administrador — Portal Universitario</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <!-- DEBUG: credenciales por defecto: admin / admin123 -->
+  <!-- TODO: cambiar contraseña antes de despliegue en producción -->
+  <!-- Backup DB disponible en: /db.sqlite -->
+  <nav>
+    <span>🏛️ Universidad Autónoma — Administración</span>
+    <div><a href="/messages">Mensajes</a> <a href="/logout">Cerrar sesión</a></div>
+  </nav>
+  <div class="container">
+    <h1>Panel de Administración</h1>
+
+    <!-- Gestión de usuarios (dato sensible) -->
+    <div class="card">
+      <h2>👥 Usuarios del sistema</h2>
+      <button onclick="cargarUsuarios()">Cargar usuarios</button>
+      <div id="userList" style="margin-top:15px;"></div>
+    </div>
+
+    <!-- Herramienta de diagnóstico (Command Injection) -->
+    <div class="card">
+      <h2>🖧 Diagnóstico de red — Ping</h2>
+      <input type="text" id="hostInput" placeholder="Host a hacer ping (ej: localhost)">
+      <button onclick="hacerPing()">Ejecutar ping</button>
+      <pre id="pingOutput" style="margin-top:10px;background:#1b1b1b;color:#00e676;padding:15px;border-radius:6px;min-height:60px;overflow:auto;"></pre>
+    </div>
+
+    <!-- Escalación de privilegios -->
+    <div class="card">
+      <h2>⚙️ Gestión de rol</h2>
+      <select id="rolSelect">
+        <option value="alumno">alumno</option>
+        <option value="docente">docente</option>
+        <option value="admin" selected>admin</option>
+      </select>
+      <button onclick="cambiarRol()">Aplicar rol</button>
+      <div id="rolMsg"></div>
+    </div>
+  </div>
+  <script src="/js/app.js"></script>
+  <script>
+    async function cargarUsuarios() {
+      const res  = await fetch('/api/users');
+      const data = await res.json();
+      document.getElementById('userList').innerHTML = `
+        <p>🚩 Flag: <code>${data.flag}</code></p>
+        <table><tr><th>ID</th><th>Usuario</th><th>Email</th><th>Rol</th><th>Password (hash)</th></tr>
+        ${data.users.map(u=>`<tr><td>${u.id}</td><td>${u.username}</td><td>${u.email}</td><td><span class="badge badge-${u.rol}">${u.rol}</span></td><td><code style="font-size:11px">${u.password}</code></td></tr>`).join('')}
+        </table>`;
+    }
+
+    async function hacerPing() {
+      const host = document.getElementById('hostInput').value;
+      const res  = await fetch('/admin/ping?host=' + encodeURIComponent(host));
+      const data = await res.json();
+      document.getElementById('pingOutput').textContent = `$ ${data.command}\n\n${data.output}`;
+    }
+
+    async function cambiarRol() {
+      const rol  = document.getElementById('rolSelect').value;
+      const res  = await fetch('/profile/update', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ rol }) });
+      const data = await res.json();
+      const msg  = document.getElementById('rolMsg');
+      if (data.flag) msg.innerHTML = `<div class="flag-box">🚩 ${data.flag}</div>`;
+      else msg.innerHTML = `<p class="success">${data.message}</p>`;
+    }
+  </script>
+</body>
+</html>
