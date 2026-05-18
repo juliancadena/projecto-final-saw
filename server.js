@@ -214,6 +214,30 @@ app.get('/download', (req, res) => {
   }
 });
 
+// ── GET /admin/ping — VULNERABLE: Command Injection ──────────
+// También vulnerable a insuficiente control de acceso: cualquier usuario autenticado puede usarla
+app.get('/admin/ping', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+  // VULNERABLE: no verifica que req.session.user.rol === 'admin'
+
+  const host = req.query.host || 'localhost';
+  // VULNERABLE: exec sin sanitización de metacaracteres de shell
+  exec(`ping -c 1 ${host}`, { timeout: 5000 }, (error, stdout, stderr) => {
+    res.json({
+      command: `ping -c 1 ${host}`,
+      output:  stdout || stderr || (error ? error.message : ''),
+    });
+  });
+});
+
+// ── GET /admin/panel — Panel de administración ────────────────
+app.get('/admin/panel', (req, res) => {
+  if (!req.session.user || req.session.user.rol !== 'admin') {
+    return res.redirect('/?error=acceso_denegado');
+  }
+  res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente
