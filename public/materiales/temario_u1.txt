@@ -1,0 +1,6 @@
+TEMARIO UNIDAD 1 — Introducción a Seguridad Web
+================================================
+1. Conceptos básicos de HTTP
+2. Autenticación y sesiones
+3. OWASP Top 10
+4. Herramientas de análisis: Burp Suite, OWASP ZAP, Nikto

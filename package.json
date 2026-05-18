@@ -1,0 +1,19 @@
+{
+  "name": "portal-universitario-vulnerable",
+  "version": "1.0.0",
+  "description": "INTENCIONALMENTE VULNERABLE — solo para uso educativo en ambiente controlado",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test tests/"
+  },
+  "dependencies": {
+    "better-sqlite3": "^9.4.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "md5": "^2.3.0"
+  },
+  "devDependencies": {
+    "supertest": "^6.3.4"
+  }
+}

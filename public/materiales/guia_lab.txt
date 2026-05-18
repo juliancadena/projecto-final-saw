@@ -1,0 +1,4 @@
+GUÍA DE LABORATORIO — Portal Universitario
+==========================================
+Instrucciones para el análisis de vulnerabilidades.
+Herramientas: OWASP ZAP, Nikto, Burp Suite.
