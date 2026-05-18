@@ -163,6 +163,39 @@ app.get('/api/xss-flag', (req, res) => {
   return res.json({ flag: FLAGS.xss });
 });
 
+// ── POST /profile/update — VULNERABLE: CSRF + Escalación de privilegios ──
+app.post('/profile/update', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+
+  const { password, rol } = req.body;
+  // VULNERABLE: no valida CSRF token
+  // VULNERABLE: acepta campo `rol` desde el cliente sin verificar rol actual
+
+  const updates = {};
+  if (password) updates.password = md5(password);
+  if (rol)      updates.rol = rol;
+
+  if (Object.keys(updates).length === 0) {
+    return res.json({ ok: false, message: 'Sin cambios' });
+  }
+
+  const sets   = Object.keys(updates).map(k => `${k} = ?`).join(', ');
+  const values = [...Object.values(updates), req.session.user.id];
+  db.prepare(`UPDATE usuarios SET ${sets} WHERE id = ?`).run(...values);
+
+  const response = { ok: true, message: 'Perfil actualizado' };
+
+  if (rol && rol !== req.session.user.rol) {
+    response.flag = FLAGS.privesc;
+    req.session.user.rol = rol;
+  }
+  if (password) {
+    response.csrf_flag = FLAGS.csrf;
+  }
+
+  return res.json(response);
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente

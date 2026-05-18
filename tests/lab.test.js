@@ -126,3 +126,38 @@ describe('VULN 3 — XSS Stored y Reflected', () => {
     assert.equal(res.body.flag, 'FLAG{xss_st0r3d}');
   });
 });
+
+describe('VULN 4 — CSRF en cambio de contraseña', () => {
+  let cookie;
+  before(async () => {
+    const res = await request(app).post('/login').send({ username: 'alumno_perez', password: 'alumno456' });
+    cookie = res.headers['set-cookie'];
+  });
+
+  test('POST /profile/update acepta cambio de contraseña sin token CSRF y retorna flag', async () => {
+    const res = await request(app)
+      .post('/profile/update')
+      .set('Cookie', cookie)
+      .send({ password: 'nueva123' });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.csrf_flag, 'FLAG{csrf_4tt4ck}');
+  });
+});
+
+describe('VULN 7 — Escalación de privilegios vertical', () => {
+  let cookie;
+  before(async () => {
+    // Usar alumno_lopez (contraseña nunca modificada por otros tests)
+    const res = await request(app).post('/login').send({ username: 'alumno_lopez', password: 'alumno123' });
+    cookie = res.headers['set-cookie'];
+  });
+
+  test('Alumno puede cambiar su propio rol a admin enviando rol=admin', async () => {
+    const res = await request(app)
+      .post('/profile/update')
+      .set('Cookie', cookie)
+      .send({ rol: 'admin' });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.flag, 'FLAG{pr1v_3sc4l4t10n}');
+  });
+});
