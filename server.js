@@ -47,6 +47,43 @@ app.get('/db.sqlite', (req, res) => res.download(DB_PATH));
 // Archivos estáticos del frontend
 app.use(express.static(path.join(__dirname, 'public')));
 
+// ── POST /login — VULNERABLE: SQL Injection ──────────────────
+app.post('/login', (req, res) => {
+  const { username = '', password = '' } = req.body;
+  const hash = md5(password);
+
+  // VULNERABLE: concatenación directa sin parámetros preparados
+  const query = `SELECT * FROM usuarios WHERE username = '${username}' AND password = '${hash}'`;
+
+  let user;
+  try {
+    user = db.prepare(query).get();
+  } catch (e) {
+    // Fuga de detalle de error (información sensible)
+    return res.status(400).json({ error: e.message, query });
+  }
+
+  if (!user) return res.status(401).json({ error: 'Credenciales inválidas' });
+
+  req.session.user = { id: user.id, username: user.username, rol: user.rol, nombre: user.nombre };
+
+  const response = { ok: true, rol: user.rol, nombre: user.nombre };
+
+  // Si el payload contiene metacaracteres SQL, la flag se revela
+  if (username.includes("'") || username.includes('--') || username.toLowerCase().includes(' or ')) {
+    response.flag  = FLAGS.sqli;
+    response.debug = `Query ejecutada: ${query}`;
+  }
+
+  return res.json(response);
+});
+
+// ── GET /logout ───────────────────────────────────────────────
+app.get('/logout', (req, res) => {
+  req.session.destroy();
+  res.redirect('/');
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente
