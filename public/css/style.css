@@ -1,0 +1,25 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: Arial, sans-serif; background: #f0f2f5; color: #333; }
+nav { background: #1a237e; color: #fff; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; }
+nav a { color: #fff; text-decoration: none; margin-left: 15px; }
+nav a:hover { text-decoration: underline; }
+.container { max-width: 900px; margin: 30px auto; padding: 0 20px; }
+.card { background: #fff; border-radius: 8px; padding: 25px; margin-bottom: 20px; box-shadow: 0 2px 6px rgba(0,0,0,.1); }
+h1 { color: #1a237e; margin-bottom: 15px; }
+h2 { color: #283593; margin-bottom: 12px; font-size: 1.2rem; }
+input, textarea, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px; font-size: 14px; }
+button { background: #1a237e; color: #fff; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+button:hover { background: #283593; }
+.error { color: #c62828; margin-top: 8px; }
+.success { color: #2e7d32; margin-top: 8px; }
+.notif { background: #fff9c4; border-left: 4px solid #f9a825; padding: 10px 15px; margin-bottom: 15px; border-radius: 4px; }
+.messages li { list-style: none; padding: 10px 0; border-bottom: 1px solid #eee; }
+.messages .date { font-size: 12px; color: #888; margin-left: 8px; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px; border-bottom: 1px solid #eee; }
+th { background: #e8eaf6; color: #1a237e; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+.badge-admin   { background: #ffcdd2; color: #b71c1c; }
+.badge-docente { background: #c8e6c9; color: #1b5e20; }
+.badge-alumno  { background: #bbdefb; color: #0d47a1; }
+.flag-box { background: #1b1b1b; color: #00e676; font-family: monospace; padding: 12px 16px; border-radius: 6px; margin-top: 10px; font-size: 14px; }
