@@ -18,6 +18,20 @@ npm start
 
 Abrir el navegador en: **http://localhost:3000**
 
+## Ejecución con Docker (recomendado)
+
+Solo necesitas tener Docker instalado. Funciona igual en equipos x64 y ARM
+(Intel/AMD, Apple Silicon): la imagen se construye para tu arquitectura
+automáticamente.
+
+```bash
+docker compose up --build
+```
+
+Abrir el navegador en: **http://localhost:3000**
+
+Para detener: `Ctrl+C` (o `docker compose down` en otra terminal).
+
 ## Cuentas de prueba
 
 | Usuario | Contraseña | Rol |
@@ -58,4 +72,10 @@ Si necesitas volver al estado inicial de la base de datos:
 ```bash
 rm db.sqlite
 npm start
+```
+
+Con Docker, cada arranque ya parte de una base de datos limpia:
+
+```bash
+docker compose down && docker compose up --build
 ```

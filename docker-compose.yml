@@ -1,0 +1,12 @@
+# Levantar el laboratorio:   docker compose up --build
+# Detener:                   Ctrl+C  (o: docker compose down)
+# Reiniciar a estado inicial: docker compose down && docker compose up --build
+#
+# No se usan volúmenes a propósito: cada arranque parte de una base de datos
+# limpia, ideal para reiniciar el laboratorio entre alumnos/sesiones.
+services:
+  lab:
+    build: .
+    ports:
+      - "3000:3000"
+    container_name: portal-vulnerable-lab
