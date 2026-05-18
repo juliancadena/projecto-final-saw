@@ -95,3 +95,34 @@ describe('VULN 6 — Exposición de datos sensibles', () => {
     assert.ok(res.status === 200 || res.status === 304);
   });
 });
+
+describe('VULN 3 — XSS Stored y Reflected', () => {
+  let cookie;
+  before(async () => {
+    const res = await request(app).post('/login').send({ username: 'alumno_lopez', password: 'alumno123' });
+    cookie = res.headers['set-cookie'];
+  });
+
+  test('POST /messages guarda contenido sin sanitizar (XSS Stored)', async () => {
+    const payload = '<script>alert("xss")</script>';
+    const post = await request(app).post('/messages').set('Cookie', cookie).send({ contenido: payload });
+    assert.equal(post.status, 200);
+
+    const get = await request(app).get('/messages').set('Cookie', cookie);
+    assert.ok(get.text.includes(payload), 'El payload XSS debe aparecer sin escapar en la respuesta HTML');
+  });
+
+  test('GET /messages?msg= refleja parámetro sin sanitizar (XSS Reflected)', async () => {
+    const payload = '<script>alert(1)</script>';
+    const res = await request(app)
+      .get(`/messages?msg=${encodeURIComponent(payload)}`)
+      .set('Cookie', cookie);
+    assert.ok(res.text.includes(payload), 'El parámetro msg debe reflejarse sin escapar');
+  });
+
+  test('GET /api/xss-flag retorna FLAG{xss_st0r3d} con sesión activa', async () => {
+    const res = await request(app).get('/api/xss-flag').set('Cookie', cookie);
+    assert.equal(res.status, 200);
+    assert.equal(res.body.flag, 'FLAG{xss_st0r3d}');
+  });
+});

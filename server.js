@@ -109,6 +109,60 @@ app.get('/api/users', (req, res) => {
   return res.json({ users, flag: FLAGS.sensitive });
 });
 
+// ── GET /messages — VULNERABLE: XSS Reflected (?msg=) ────────
+app.get('/messages', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+
+  const msg = req.query.msg || '';
+  const messages = db.prepare('SELECT * FROM mensajes ORDER BY fecha DESC').all();
+
+  // VULNERABLE: msg y contenidos se insertan en HTML sin escapar
+  res.send(`<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Mensajes — Portal Universitario</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <nav><a href="/dashboard.html">← Volver</a> | <a href="/logout">Cerrar sesión</a></nav>
+  <h1>Tablero de mensajes</h1>
+  ${msg ? `<div class="notif">Notificación: ${msg}</div>` : ''}
+  <ul class="messages">
+    ${messages.map(m => `<li><strong>${m.autor}</strong> <span class="date">${m.fecha}</span><br>${m.contenido}</li>`).join('')}
+  </ul>
+  <form id="msgForm">
+    <textarea name="contenido" placeholder="Escribe un mensaje..." rows="3"></textarea>
+    <button type="submit">Enviar</button>
+  </form>
+  <script>
+    document.getElementById('msgForm').addEventListener('submit', async e => {
+      e.preventDefault();
+      const body = new URLSearchParams(new FormData(e.target));
+      await fetch('/messages', { method: 'POST', body });
+      location.reload();
+    });
+  </script>
+</body>
+</html>`);
+});
+
+// ── POST /messages — VULNERABLE: XSS Stored ──────────────────
+app.post('/messages', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+
+  const { contenido = '' } = req.body;
+  // VULNERABLE: se guarda sin sanitizar
+  db.prepare('INSERT INTO mensajes (autor, contenido) VALUES (?, ?)').run(req.session.user.username, contenido);
+  return res.json({ ok: true });
+});
+
+// ── GET /api/xss-flag — la llama el payload XSS para obtener la flag ──
+app.get('/api/xss-flag', (req, res) => {
+  if (!req.session.user) return res.status(401).json({ error: 'No autenticado' });
+  return res.json({ flag: FLAGS.xss });
+});
+
 // ── Rutas (se añaden en tareas posteriores) ───────────────────
 
 // Iniciar servidor solo cuando se ejecuta directamente
